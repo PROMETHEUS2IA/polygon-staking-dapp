@@ -71,3 +71,29 @@ contract Staking {
         stakingToken.transfer(msg.sender, userStake.amount + reward);
     }
 }
+address public owner;
+
+constructor(address _token) {
+    stakingToken = IERC20(_token); 
+    owner = msg.sender; // Establece al creador como dueño
+}
+
+modifier onlyOwner() {
+    require(msg.sender == owner, "Only owner can adjust rewards");
+    _;
+}
+
+function setRewardRate(uint256 _monthlyRate, uint256 _annualRate) external onlyOwner {
+    MIN_MONTHLY_REWARD = _monthlyRate;
+    MIN_ANNUAL_REWARD = _annualRate;
+}
+function getStakeDetails(address _staker) external view returns (uint256 amountStaked, uint256 reward) {
+    Stake memory userStake = stakes[_staker];
+    require(userStake.amount > 0, "No active stake");
+    
+    uint256 accumulatedReward = calculateReward(_staker);
+    return (userStake.amount, accumulatedReward);
+}
+function getContractBalance() external view returns (uint256) {
+    return stakingToken.balanceOf(address(this));
+}
